@@ -1,13 +1,25 @@
 package model.dao.impl;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.List;
 
+import db.DB;
+import db.DbException;
 import model.dao.SellerDao;
+import model.entities.Department;
 import model.entities.Seller;
 
 public class SellerDaoJDBC implements SellerDao {
 	
+	private Connection conn;
 	
+	//dependency injection.
+	public SellerDaoJDBC(Connection conn) {
+		this.conn = conn;
+	}
 
 	@Override
 	public void insert(Seller obj) {
@@ -29,8 +41,39 @@ public class SellerDaoJDBC implements SellerDao {
 
 	@Override
 	public Seller findById(Integer id) {
-		// TODO Auto-generated method stub
-		return null;
+		PreparedStatement st = null;
+		ResultSet rs = null;
+		try {
+			st = conn.prepareStatement(
+					"SELECT seller.*,department.Name as DepName "
+					+"FROM seller INNER JOIN department " 
+					+"ON seller.DepartmentId = department.Id " 
+					+"WHERE seller.Id = ?");
+			st.setInt(1, id);
+			rs = st.executeQuery();
+			//RS will receiv the result in form of the table
+			//in the computer i will want in form of memory
+			
+			//rs will receiv at position 0; where there is nothing
+			if(rs.next()) { //test if any results arrived
+				Department dep = new Department();
+				dep.setId(rs.getInt("DepartementId"));
+				dep.setName(rs.getString("Depname"));
+				
+				Seller obj = new Seller();
+				//it is the whole obj,
+				obj.setDepartment(dep);
+				return obj;
+			}
+			return null;	
+		}
+		catch(SQLException e) {
+			throw new DbException(e.getMessage());
+		}
+		finally {
+			DB.closeStatement(st);
+			DB.closeResultSet(rs);
+		}
 	}
 
 	@Override
