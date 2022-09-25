@@ -54,15 +54,18 @@ public class SellerDaoJDBC implements SellerDao {
 			//RS will receiv the result in form of the table
 			//in the computer i will want in form of memory
 			
-			//rs will receiv at position 0; where there is nothing
+			//rs will receive at position 0; where there is nothing
 			if(rs.next()) { //test if any results arrived
 				Department dep = new Department();
 				dep.setId(rs.getInt("DepartementId"));
 				dep.setName(rs.getString("Depname"));
-				
 				Seller obj = new Seller();
-				//it is the whole obj,
-				obj.setDepartment(dep);
+				obj.setId(rs.getInt("id"));
+				obj.setName(rs.getString("Name"));
+				obj.setEmail(rs.getString("BaseSalary"));
+				obj.setBaseSalary(rs.getDouble("BaseSalary"));
+				obj.setBirthDate(rs.getDate("BirthDate"));	
+				obj.setDepartment(dep); //it is the whole obj,
 				return obj;
 			}
 			return null;	
