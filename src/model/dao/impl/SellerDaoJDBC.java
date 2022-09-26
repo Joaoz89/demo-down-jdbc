@@ -46,9 +46,9 @@ public class SellerDaoJDBC implements SellerDao {
 		try {
 			st = conn.prepareStatement(
 					"SELECT seller.*,department.Name as DepName "
-					+"FROM seller INNER JOIN department " 
-					+"ON seller.DepartmentId = department.Id " 
-					+"WHERE seller.Id = ?");
+					+ "FROM seller INNER JOIN department " 
+					+ "ON seller.DepartmentId = department.Id " 
+					+ "WHERE seller.Id = ?");
 			st.setInt(1, id);
 			rs = st.executeQuery();
 			//RS will receiv the result in form of the table
@@ -56,16 +56,8 @@ public class SellerDaoJDBC implements SellerDao {
 			
 			//rs will receive at position 0; where there is nothing
 			if(rs.next()) { //test if any results arrived
-				Department dep = new Department();
-				dep.setId(rs.getInt("DepartementId"));
-				dep.setName(rs.getString("Depname"));
-				Seller obj = new Seller();
-				obj.setId(rs.getInt("id"));
-				obj.setName(rs.getString("Name"));
-				obj.setEmail(rs.getString("BaseSalary"));
-				obj.setBaseSalary(rs.getDouble("BaseSalary"));
-				obj.setBirthDate(rs.getDate("BirthDate"));	
-				obj.setDepartment(dep); //it is the whole obj,
+				Department dep = intantiateDepartment(rs);
+				Seller obj = instantieteSeller(rs, dep);
 				return obj;
 			}
 			return null;	
@@ -77,6 +69,24 @@ public class SellerDaoJDBC implements SellerDao {
 			DB.closeStatement(st);
 			DB.closeResultSet(rs);
 		}
+	}
+
+	private Seller instantieteSeller(ResultSet rs, Department dep) throws SQLException {
+		Seller obj = new Seller();
+		obj.setId(rs.getInt("Id"));
+		obj.setName(rs.getString("Name"));
+		obj.setEmail(rs.getString("Email"));
+		obj.setBaseSalary(rs.getDouble("BaseSalary"));
+		obj.setBirthDate(rs.getDate("BirthDate"));	
+		obj.setDepartment(dep); //it is the whole obj,
+		return obj;
+	}
+
+	private Department intantiateDepartment(ResultSet rs) throws SQLException {
+		 Department dep = new Department();
+		 dep.setId(rs.getInt("DepartmentId"));
+		 dep.setName(rs.getString("DepName"));
+		return dep;
 	}
 
 	@Override
