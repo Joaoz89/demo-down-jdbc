@@ -1,5 +1,8 @@
 package application;
 
+
+
+import java.util.Date;
 import java.util.List;
 
 import model.dao.DaoFactory;
@@ -12,7 +15,7 @@ public class Program {
 	public static void main(String[] args) {
 		
 		
-		//this way my Program dont know the implementation just interface 
+		//this way my Program don't know the implementation just interface 
 		//it too a way of us do a dependency injection without explicit the implementation
 		SellerDao sellerDao = DaoFactory.createSellerDao();
 		
@@ -34,6 +37,11 @@ public class Program {
 			System.out.println(obj);
 		}
 		
+		
+		System.out.println("\n========= TEST 1: seller insert =====");
+		Seller newSeller = new Seller(null, "Greg", "greg@gmail.com", new Date(), 4000.0, department);
+		sellerDao.insert(newSeller);
+		System.out.println("Inserted! New id = " + newSeller.getId());
 	}
 
 }
