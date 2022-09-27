@@ -17,10 +17,10 @@ import model.entities.Department;
 import model.entities.Seller;
 
 public class SellerDaoJDBC implements SellerDao {
-	
+
 	private Connection conn;
-	
-	//dependency injection.
+
+	// dependency injection.
 	public SellerDaoJDBC(Connection conn) {
 		this.conn = conn;
 	}
@@ -29,51 +29,64 @@ public class SellerDaoJDBC implements SellerDao {
 	public void insert(Seller obj) {
 		PreparedStatement st = null;
 		try {
-			st = conn.prepareStatement(
-					"INSERT INTO seller "
-					+ "(Name, Email, BirthDate, BaseSalary, DepartmentId) " 
-					+ "VALUES "
-					+ "(?, ?, ?, ?, ?)",
-					Statement.RETURN_GENERATED_KEYS);
-					
+			st = conn.prepareStatement("INSERT INTO seller " + "(Name, Email, BirthDate, BaseSalary, DepartmentId) "
+					+ "VALUES " + "(?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);
+
 			st.setString(1, obj.getName());
-			st.setString(2, obj.getEmail());		
+			st.setString(2, obj.getEmail());
 			st.setDate(3, new java.sql.Date(obj.getBirthDate().getTime()));
 			st.setDouble(4, obj.getBaseSalary());
 			st.setInt(5, obj.getDepartment().getId());
-		
+
 			int rowsAffected = st.executeUpdate();
-			 if (rowsAffected > 0 ) {
-				 ResultSet rs = st.getGeneratedKeys();
-				 if (rs.next()) {
-					 int id = rs.getInt(1);
-					 obj.setId(id);
-				 }
-				 DB.closeResultSet(rs);
-			 }
-			 else {
-				 throw new DbException("Unexpected error! no rows affected!");
-			 }
-	}
-		catch (SQLException e) {
+			if (rowsAffected > 0) {
+				ResultSet rs = st.getGeneratedKeys();
+				if (rs.next()) {
+					int id = rs.getInt(1);
+					obj.setId(id);
+				}
+				DB.closeResultSet(rs);
+			} else {
+				throw new DbException("Unexpected error! no rows affected!");
+			}
+		} catch (SQLException e) {
 			throw new DbException(e.getMessage());
-			
-		}
-		finally {
+
+		} finally {
 			DB.closeStatement(st);
 		}
 	}
 
 	@Override
 	public void update(Seller obj) {
-		// TODO Auto-generated method stub
-		
+		PreparedStatement st = null;
+		try {
+			st = conn.prepareStatement(
+					"UPDATE seller "
+					+ "SET Name = ?, Email = ?, BirthDate = ?, BaseSalary = ?, DepartmentId = ? " 
+					+ "WHERE Id = ? ");
+
+			st.setString(1, obj.getName());
+			st.setString(2, obj.getEmail());
+			st.setDate(3, new java.sql.Date(obj.getBirthDate().getTime()));
+			st.setDouble(4, obj.getBaseSalary());
+			st.setInt(5, obj.getDepartment().getId());
+			st.setInt(6, obj.getId());
+
+			st.executeUpdate();
+
+		} catch (SQLException e) {
+			throw new DbException(e.getMessage());
+
+		} finally {
+			DB.closeStatement(st);
+		}
 	}
 
 	@Override
 	public void deleteById(Integer id) {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
@@ -82,31 +95,28 @@ public class SellerDaoJDBC implements SellerDao {
 		ResultSet rs = null;
 		try {
 			st = conn.prepareStatement(
-					"SELECT seller.*,department.Name as DepName "
-					+ "FROM seller INNER JOIN department " 
-					+ "ON seller.DepartmentId = department.Id " 
-					+ "WHERE seller.Id = ?");
+					"SELECT seller.*,department.Name as DepName " + "FROM seller INNER JOIN department "
+							+ "ON seller.DepartmentId = department.Id " + "WHERE seller.Id = ?");
 			st.setInt(1, id);
 			rs = st.executeQuery();
-			//RS will receive the result in form of the table
-			//in the computer i will want in form of memory
-			
-			//rs will receive at position 0; where there is nothing
-			if(rs.next()) { //test if any results arrived
+			// RS will receive the result in form of the table
+			// in the computer i will want in form of memory
+
+			// rs will receive at position 0; where there is nothing
+			if (rs.next()) { // test if any results arrived
 				Department dep = instantiateDepartment(rs);
 				Seller obj = instantieteSeller(rs, dep);
 				return obj;
 			}
-			return null;	
-		}
-		catch(SQLException e) {
+			return null;
+		} catch (SQLException e) {
 			throw new DbException(e.getMessage());
-		}
-		finally {
+		} finally {
 			DB.closeStatement(st);
 			DB.closeResultSet(rs);
 		}
 	}
+
 //____________________________________________________________________
 	private Seller instantieteSeller(ResultSet rs, Department dep) throws SQLException {
 		Seller obj = new Seller();
@@ -114,17 +124,19 @@ public class SellerDaoJDBC implements SellerDao {
 		obj.setName(rs.getString("Name"));
 		obj.setEmail(rs.getString("Email"));
 		obj.setBaseSalary(rs.getDouble("BaseSalary"));
-		obj.setBirthDate(rs.getDate("BirthDate"));	
-		obj.setDepartment(dep); //it is the whole obj,
+		obj.setBirthDate(rs.getDate("BirthDate"));
+		obj.setDepartment(dep); // it is the whole obj,
 		return obj;
 	}
+
 //________________________________________________________________________
 	private Department instantiateDepartment(ResultSet rs) throws SQLException {
-		 Department dep = new Department();
-		 dep.setId(rs.getInt("DepartmentId"));
-		 dep.setName(rs.getString("DepName"));
+		Department dep = new Department();
+		dep.setId(rs.getInt("DepartmentId"));
+		dep.setName(rs.getString("DepName"));
 		return dep;
 	}
+
 //-____________________________________________________________________________
 	@Override
 	public List<Seller> findAll() {
@@ -132,42 +144,38 @@ public class SellerDaoJDBC implements SellerDao {
 		ResultSet rs = null;
 		try {
 			st = conn.prepareStatement(
-					"SELECT seller.*,department.Name as DepName " 
-					+ "FROM seller INNER JOIN department "
-					+ "ON seller.DepartmentId = department.Id "
-					+ "ORDER BY Name");
-		
+					"SELECT seller.*,department.Name as DepName " + "FROM seller INNER JOIN department "
+							+ "ON seller.DepartmentId = department.Id " + "ORDER BY Name");
+
 			rs = st.executeQuery();
-			//RS will receive the result in form of the table
-			//in the computer i will want in form of memory
-			
-			//rs will receive at position 0; where there is nothing
-			
+			// RS will receive the result in form of the table
+			// in the computer i will want in form of memory
+
+			// rs will receive at position 0; where there is nothing
+
 			List<Seller> list = new ArrayList<>();
-			Map<Integer, Department> map = new HashMap<>();//save here any Department i instantiete
-			
-			while(rs.next()) { //test if any results arrived
-				
-				Department dep = map.get(rs.getInt("DepartmentId"));//test if Depar.. exist
+			Map<Integer, Department> map = new HashMap<>();// save here any Department i instantiete
+
+			while (rs.next()) { // test if any results arrived
+
+				Department dep = map.get(rs.getInt("DepartmentId"));// test if Depar.. exist
 				if (dep == null) {
 					dep = instantiateDepartment(rs);
 					map.put(rs.getInt("DepartmentId"), dep);
 				}
-			
+
 				Seller obj = instantieteSeller(rs, dep);
 				list.add(obj);
 			}
-			return list;	
-		}
-		catch(SQLException e) {
+			return list;
+		} catch (SQLException e) {
 			throw new DbException(e.getMessage());
-		}
-		finally {
+		} finally {
 			DB.closeStatement(st);
 			DB.closeResultSet(rs);
-		}		
+		}
 	}
-	
+
 //_______________________________________________________________________________________
 	@Override
 	public List<Seller> findBydepartment(Department department) {
@@ -175,43 +183,36 @@ public class SellerDaoJDBC implements SellerDao {
 		ResultSet rs = null;
 		try {
 			st = conn.prepareStatement(
-					"SELECT seller.*,department.Name as DepName " 
-					+ "FROM seller INNER JOIN department "
-					+ "ON seller.DepartmentId = department.Id "
-					+ "WHERE DepartmentId = ? "
-					+ "ORDER BY Name");
+					"SELECT seller.*,department.Name as DepName " + "FROM seller INNER JOIN department "
+							+ "ON seller.DepartmentId = department.Id " + "WHERE DepartmentId = ? " + "ORDER BY Name");
 			st.setInt(1, department.getId());
 			rs = st.executeQuery();
-			//RS will receive the result in form of the table
-			//in the computer i will want in form of memory
-			
-			//rs will receive at position 0; where there is nothing
-			
+			// RS will receive the result in form of the table
+			// in the computer i will want in form of memory
+
+			// rs will receive at position 0; where there is nothing
+
 			List<Seller> list = new ArrayList<>();
-			Map<Integer, Department> map = new HashMap<>();//save here any Department i instantiete
-			
-			while(rs.next()) { //test if any results arrived
-				
-				Department dep = map.get(rs.getInt("DepartmentId"));//test if Depar.. exist
+			Map<Integer, Department> map = new HashMap<>();// save here any Department i instantiete
+
+			while (rs.next()) { // test if any results arrived
+
+				Department dep = map.get(rs.getInt("DepartmentId"));// test if Depar.. exist
 				if (dep == null) {
 					dep = instantiateDepartment(rs);
 					map.put(rs.getInt("DepartmentId"), dep);
 				}
-			
+
 				Seller obj = instantieteSeller(rs, dep);
 				list.add(obj);
 			}
-			return list;	
-		}
-		catch(SQLException e) {
+			return list;
+		} catch (SQLException e) {
 			throw new DbException(e.getMessage());
-		}
-		finally {
+		} finally {
 			DB.closeStatement(st);
 			DB.closeResultSet(rs);
-		}		
+		}
 	}
-	
-	
 
 }
